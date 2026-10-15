@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ settings.AGENT_NAME }} - آٹونومس یوٹیوب منیجر برائے {{ settings.CHANNEL_NAME }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div class="container">
+    <!-- ہیڈر سیکشن -->
+    <header>
+        <div class="brand">
+            <div class="brand-icon">🕌</div>
+            <div class="brand-title">
+                <h1>{{ settings.AGENT_NAME }}</h1>
+                <p>چینل منیجر برائے "{{ settings.CHANNEL_NAME }}" | اسلامی تاریخ و تعلیمی سلسلہ</p>
+            </div>
+        </div>
+        <div class="header-status">
+            <div class="status-pill status-online">
+                <span>●</span> خودکار موڈ فعال (Asia/Karachi)
+            </div>
+        </div>
+    </header>
+
+    <!-- لائیو شماریات کارڈز -->
+    <div class="grid-stats">
+        <div class="stat-card">
+            <div class="stat-header">
+                <span>چینل سبسکرائبرز</span>
+                <span>👥</span>
+            </div>
+            <div class="stat-value" id="statSubs">{{ channel.total_subscribers | default(0) }}</div>
+            <div class="stat-sub">مجموعی ناظرین کا نیٹ ورک</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span>مجموعی ویوز (Views)</span>
+                <span>👁️</span>
+            </div>
+            <div class="stat-value" id="statViews">{{ channel.total_views | default(0) }}</div>
+            <div class="stat-sub">اسلامی تاریخ کے مشاہدات</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span>شائع شدہ ویڈیوز</span>
+                <span>🎬</span>
+            </div>
+            <div class="stat-value" id="statVideos">{{ channel.total_videos | default(0) }}</div>
+            <div class="stat-sub">دی بیان دستاویزی فلمیں</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span>شیڈول ونڈو (PST)</span>
+                <span>⏰</span>
+            </div>
+            <div class="stat-value" style="font-size: 1.4rem;">6:00 PM - 9:00 PM</div>
+            <div class="stat-sub">روزانہ 1 کوئز اور 1 پول</div>
+        </div>
+    </div>
+
+    <!-- مین ورک اسپیس لے آؤٹ -->
+    <div class="main-layout">
+        <!-- بایاں کالم: کمانڈ کنٹرول سینٹر -->
+        <div class="col-left">
+            <div class="card">
+                <div class="card-title">
+                    <h2><span>⚡</span> کمانڈ اور کنٹرول پینل (Urdu Console)</h2>
+                </div>
+
+                <p style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 0.8rem;">
+                    فوری کارروائی کے لیے درج ذیل بٹن پر کلک کریں یا براہ راست اردو میں کمانڈ درج کریں:
+                </p>
+
+                <!-- کوئیک کمانڈ بٹنز -->
+                <div class="quick-buttons">
+                    <button class="btn-cmd" data-cmd="روزانہ آڈٹ شروع کریں">🚀 روزانہ آڈٹ شروع کریں</button>
+                    <button class="btn-cmd" data-cmd="آج کی رپورٹ دکھائیں">📄 آج کی رپورٹ دکھائیں</button>
+                    <button class="btn-cmd" data-cmd="اگلے دو دن کی پوسٹس دکھائیں">📅 اگلے دو دن کی پوسٹس دکھائیں</button>
+                    <button class="btn-cmd" data-cmd="شیڈول شدہ پوسٹس کی تصدیق کریں">✅ شیڈول شدہ پوسٹس کی تصدیق کریں</button>
+                    <button class="btn-cmd" data-cmd="ناکام کاموں کی تفصیل دکھائیں">🔍 ناکام کاموں کی تفصیل دکھائیں</button>
+                    <button class="btn-cmd" data-cmd="ایجنٹ کا سسٹم اسٹیٹس دکھائیں">💻 ایجنٹ کا سسٹم اسٹیٹس دکھائیں</button>
+                    <button class="btn-cmd" data-cmd="نئی کوئز پوسٹ تیار کریں">❓ نئی کوئز پوسٹ تیار کریں</button>
+                    <button class="btn-cmd" data-cmd="نیا ٹیکسٹ پول تیار کریں">📊 نیا ٹیکسٹ پول تیار کریں</button>
+                </div>
+
+                <!-- لائیو آؤٹ پٹ کنسول -->
+                <div class="console-box" id="consoleBox"></div>
+
+                <!-- مینوئل ان پٹ -->
+                <div class="cmd-input-group">
+                    <input type="text" id="cmdInput" class="cmd-input" placeholder="اردو میں کمانڈ یا سوال درج کریں..." />
+                    <button id="btnSend" class="btn-primary">ارسال کریں</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- دایاں کالم: رولنگ پوسٹنگ قطار اور رپورٹس -->
+        <div class="col-right">
+            <div class="card">
+                <div class="card-title">
+                    <h2><span>📋</span> رولنگ پوسٹنگ قطار (Rolling 24-48h Queue)</h2>
+                </div>
+                <div class="queue-list" id="queueContainer">
+                    <!-- متحرک طور پر لوڈ ہوگا -->
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <h2><span>📁</span> حالیہ آڈٹ آرکائیوز (Permanent Reports)</h2>
+                </div>
+                <div style="font-size: 0.9rem; color: #cbd5e1;">
+                    تمام یومیہ رپورٹس مستقل بنیادوں پر مارک ڈاؤن (.md) اور ایچ ٹی ایم ایل (.html) فارمیٹ میں <code>{{ settings.REPORTS_DIR }}</code> میں محفوظ کی جاتی ہیں۔
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- فوٹر -->
+    <div class="footer">
+        {{ settings.AGENT_NAME }} — خودکار یوٹیوب چینل مینیجر برائے "{{ settings.CHANNEL_NAME }}" | ٹائم زون: {{ settings.TIMEZONE }} (PST)
+    </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+services:
+  agent_am:
+    build: .
+    container_name: agent_am_the_bayan
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - TZ=Asia/Karachi
+    env_file:
+      - .env
+    volumes:
+      - ./reports:/app/reports
+      - ./agent_am.db:/app/agent_am.db
+      - ./browser_session:/app/browser_session
