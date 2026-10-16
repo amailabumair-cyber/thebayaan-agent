@@ -229,3 +229,43 @@ class ContentCalendarEntry(Base):
     notes_urdu = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+
+# ---------------------------------------------------------------------------
+# Phase 4 — Audience Manager Tables (additive only — existing tables unchanged)
+# ---------------------------------------------------------------------------
+
+class CommentSentiment(str, enum.Enum):
+    POSITIVE = "POSITIVE"      # تحسین و دعا
+    QUESTION = "QUESTION"      # سوال یا استفسار
+    REQUEST = "REQUEST"        # موضوع کی فرمائش
+    CONFUSION = "CONFUSION"    # ابہام یا تاریخی اشکال
+    NEUTRAL = "NEUTRAL"        # عام تبصرہ
+
+
+class DraftReplyStatus(str, enum.Enum):
+    DRAFT_ONLY = "DRAFT_ONLY"            # صرف مسودہ (خودکار شائع نہیں ہوگا)
+    APPROVED_FOR_MANUAL = "APPROVED"     # دستی کاپی کے لیے منظور شدہ
+    REJECTED = "REJECTED"                # مسترد
+
+
+class AudienceComment(Base):
+    """یوٹیوب ویڈیوز کے کمنٹس اور تجزیہ (Phase 4 - Audience Manager)"""
+    __tablename__ = "audience_comments"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    comment_id = Column(String(100), nullable=False, unique=True, index=True)
+    author_name = Column(String(255), nullable=False)
+    author_channel_id = Column(String(100), nullable=True)
+    text_original = Column(Text, nullable=False)
+    published_at = Column(DateTime, nullable=True)
+    like_count = Column(Integer, default=0)
+    video_id = Column(String(100), nullable=True, index=True)
+
+    sentiment = Column(Enum(CommentSentiment), default=CommentSentiment.NEUTRAL, nullable=False)
+    is_question = Column(Boolean, default=False)
+    draft_reply_urdu = Column(Text, nullable=True)
+    draft_status = Column(Enum(DraftReplyStatus), default=DraftReplyStatus.DRAFT_ONLY, nullable=False)
+
+    retrieved_at = Column(DateTime, default=datetime.utcnow)
+
+
