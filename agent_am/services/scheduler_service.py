@@ -47,6 +47,18 @@ class SchedulerService:
         )
         logger.info("مسڈ رن ریکوری اور قطار کی توثیقی جاب ہر 2 گھنٹے بعد رجسٹرڈ")
 
+        # 3. خودکار پوسٹ ڈسپیچر (ہر 60 سیکنڈ بعد شیڈول وقت کی جانچ اور اشاعت)
+        from agent_am_growth.reliability.dispatcher import queue_dispatcher
+        self.scheduler.add_job(
+            queue_dispatcher.dispatch_due_posts,
+            trigger=IntervalTrigger(seconds=60, timezone=settings.tz),
+            id="auto_post_dispatcher",
+            name="خودکار پوسٹنگ ڈسپیچر",
+            replace_existing=True,
+            coalesce=True
+        )
+        logger.info("خودکار پوسٹنگ ڈسپیچر رجسٹرڈ (ہر 60 سیکنڈ بعد لائیو وقت کی جانچ)")
+
     async def _heartbeat_and_queue_check(self):
         """چیک کرتا ہے کہ اگلے 48 گھنٹوں کی قطار مکمل ہے یا نہیں"""
         try:

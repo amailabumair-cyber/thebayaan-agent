@@ -70,10 +70,14 @@ class QueueManager:
             target_dt = now_pkt + timedelta(days=day_offset)
             target_date_str = target_dt.strftime("%Y-%m-%d")
 
-            # 1. کوئز کا وقت: شام 6:30 بجے (18:30 PST)
-            quiz_time = target_dt.replace(hour=18, minute=30, second=0, microsecond=0)
-            # 2. پول کا وقت: رات 8:15 بجے (20:15 PST)
-            poll_time = target_dt.replace(hour=20, minute=15, second=0, microsecond=0)
+            import random
+            # 1. کوئز کا وقت: سوا 6 بجے (18:15 PST) مع قدرتی تغیر (±15 منٹ بمطابق 6:00 تا 6:45 PM)
+            quiz_jitter_minutes = random.choice([0, -10, 10, -15, 15])
+            quiz_time = target_dt.replace(hour=18, minute=15, second=0, microsecond=0) + timedelta(minutes=quiz_jitter_minutes)
+            
+            # 2. پول کا وقت: سوا 8 بجے (20:15 PST) مع قدرتی تغیر (±15 منٹ بمطابق 8:00 تا 8:45 PM)
+            poll_jitter_minutes = random.choice([0, -10, 10, -15, 15])
+            poll_time = target_dt.replace(hour=20, minute=15, second=0, microsecond=0) + timedelta(minutes=poll_jitter_minutes)
 
             # کوئز چیک کریں
             quiz_exists = await self._is_post_present(target_date_str, PostType.QUIZ)
