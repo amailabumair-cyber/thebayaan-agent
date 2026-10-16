@@ -35,7 +35,7 @@ class Settings(BaseSettings):
 
     # 4. اے آئی ماڈل (AI Settings)
     AI_PROVIDER: str = Field(default="gemini") # "gemini" or "openai"
-    AI_MODEL_NAME: str = Field(default="gemini-2.5-flash")
+    AI_MODEL_NAME: str = Field(default="gemini-3.8-flash")
     GEMINI_API_KEY: str = Field(default="")
     OPENAI_API_KEY: str = Field(default="")
 
