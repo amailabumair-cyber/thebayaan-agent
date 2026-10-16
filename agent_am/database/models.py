@@ -269,3 +269,60 @@ class AudienceComment(Base):
     retrieved_at = Column(DateTime, default=datetime.utcnow)
 
 
+# ---------------------------------------------------------------------------
+# Phase 5 — Video Production Pipeline Tables (additive only — existing tables unchanged)
+# ---------------------------------------------------------------------------
+
+class ProductionStage(str, enum.Enum):
+    TOPIC_PROPOSED = "TOPIC_PROPOSED"              # 1. موضوع تجویز شدہ
+    RESEARCH_PENDING = "RESEARCH_PENDING"          # 2. تحقیق طلب
+    SOURCES_REVIEWED = "SOURCES_REVIEWED"          # 3. مآخذ و روایات کی جانچ مکمل
+    SCRIPT_DRAFT = "SCRIPT_DRAFT"                  # 4. ابتدائی اسکرپٹ تحریر
+    SCRIPT_APPROVED = "SCRIPT_APPROVED"            # 5. اسکرپٹ کی شرعی و تاریخی منظوری
+    VISUAL_PROMPTS = "VISUAL_PROMPTS"              # 6. منظر بہ منظر بصری پرامپٹس تیار
+    VOICEOVER_EDITING = "VOICEOVER_EDITING"        # 7. صداکاری و ویڈیو ایڈیٹنگ
+    UPLOAD_PREP = "UPLOAD_PREP"                    # 8. عنوان، تفصیل، ٹیگز اور تھمب نیل تیار
+    PUBLICATION_APPROVED = "PUBLICATION_APPROVED"  # 9. اشاعت کی حتمی منظوری
+    PERFORMANCE_REVIEW = "PERFORMANCE_REVIEW"      # 10. کارکردگی کا تفصیلی جائزہ
+
+
+class VideoProductionProject(Base):
+    """10 مراحل پر مشتمل ویڈیو پروڈکشن پائپ لائن (Phase 5 - Video Production Manager)"""
+    __tablename__ = "video_production_projects"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_code = Column(String(50), nullable=False, unique=True, index=True)  # مثلاً VPP-001
+    title_urdu = Column(String(500), nullable=False)
+    stage = Column(Enum(ProductionStage), default=ProductionStage.TOPIC_PROPOSED, nullable=False, index=True)
+
+    # تاریخی تحقیق و مآخذ
+    historical_notes_urdu = Column(Text, nullable=True)
+    verified_sources_json = Column(Text, nullable=False, default="[]")       # مستند کتب
+    disputed_points_notes_urdu = Column(Text, nullable=True)                 # اختلافی مقامات
+
+    # اسکرپٹ
+    opening_hook_urdu = Column(Text, nullable=True)                          # 15 سیکنڈ ہوک
+    script_outline_urdu = Column(Text, nullable=True)                        # خاکہ
+    full_script_draft_urdu = Column(Text, nullable=True)                     # مکمل اسکرپٹ
+
+    # بصری مناظر و پرامپٹس
+    scene_prompts_json = Column(Text, nullable=False, default="[]")          # مناظر کے پرامپٹس
+
+    # صداکاری و ایڈیٹنگ
+    voiceover_checklist_json = Column(Text, nullable=False, default="[]")    # چیک لسٹ
+
+    # میٹا ڈیٹا برائے یوٹیوب
+    suggested_titles_json = Column(Text, nullable=False, default="[]")
+    description_draft_urdu = Column(Text, nullable=True)
+    tags_json = Column(Text, nullable=False, default="[]")
+    thumbnail_concept_urdu = Column(Text, nullable=True)
+
+    target_publish_date = Column(String(20), nullable=True)                  # YYYY-MM-DD
+    reviewer_notes_urdu = Column(Text, nullable=True)
+    is_publication_approved = Column(Boolean, default=False)                 # صریح منظوری کا نشان
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+
