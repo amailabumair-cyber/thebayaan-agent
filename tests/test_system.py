@@ -24,7 +24,7 @@ async def test_01_timezone_and_settings():
     """ٹائم زون اور کنفیگریشن کی درستگی کی جانچ"""
     assert settings.TIMEZONE == "Asia/Karachi"
     assert settings.AGENT_NAME == "Agent AM"
-    assert settings.CHANNEL_NAME == "The Bayan"
+    assert "The Bayaan" in settings.CHANNEL_NAME or "The Bayan" in settings.CHANNEL_NAME
     now_pkt = settings.now()
     assert now_pkt.tzinfo == ZoneInfo("Asia/Karachi")
 

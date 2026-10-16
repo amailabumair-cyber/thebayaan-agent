@@ -134,7 +134,8 @@ class QueueManager:
             question=data["question"],
             options=data["options"],
             correct_answer=data.get("correct_answer"),
-            explanation=data.get("explanation")
+            explanation=data.get("explanation"),
+            source_reference=data.get("source_reference")
         )
 
         async with AsyncSessionLocal() as session:
