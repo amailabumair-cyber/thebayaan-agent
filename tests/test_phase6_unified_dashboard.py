@@ -181,3 +181,12 @@ def test_original_dashboard_remains_intact(client):
     resp = client.get("/")
     assert resp.status_code == 200
     assert "The Bayan" in resp.text or "Agent AM" in resp.text
+
+
+def test_api_growth_portal_html(client):
+    """ویژول گروتھ پورٹل (/growth/portal) کا ٹیسٹ"""
+    resp = client.get("/growth/portal")
+    assert resp.status_code == 200
+    assert "The Bayaan" in resp.text
+    assert "30 روزہ" in resp.text or "کنٹینٹ کیلنڈر" in resp.text
+

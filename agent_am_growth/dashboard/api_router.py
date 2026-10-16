@@ -14,11 +14,14 @@ The Bayaan چینل کے تمام نئے ماڈیولز کو FastAPI کے سات
 """
 
 import os
+from pathlib import Path
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 
 import pytz
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 from agent_am.config.settings import settings
@@ -41,6 +44,10 @@ from agent_am.core.queue_manager import queue_manager
 
 router = APIRouter(prefix="/growth", tags=["Agent AM Growth System"])
 PKT = pytz.timezone("Asia/Karachi")
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "agent_am" / "ui" / "templates"))
+
 
 
 # ---------------------------------------------------------------------------
@@ -96,8 +103,55 @@ async def get_system_overview() -> Dict[str, Any]:
     }
 
 
+@router.get("/portal", response_class=HTMLResponse)
+async def get_growth_portal(request: Request):
+    """یوٹیوب گروتھ و کونٹینٹ مینجمنٹ پورٹل (Visual HTML Interface)"""
+    overview_data = await get_system_overview()
+    cal_data = await get_content_calendar()
+    approval_items = await approval_engine.list_items()
+
+    calendar_entries = [
+        {
+            "day_number": e["day_number"],
+            "scheduled_date": e["target_date"],
+            "category": e["category"],
+            "video_title_urdu": e["video_title"],
+            "opening_hook_urdu": e["notes"] or "15 سیکنڈ افتتاحی ہک اور تاریخی پس منظر",
+            "community_post_proposal": f"کوئز: {e['quiz_proposal'][:40]}... / پول: {e['poll_proposal'][:40]}...",
+        }
+        for e in cal_data["entries"]
+    ]
+
+    approvals_formatted = [
+        {
+            "id": it.id,
+            "item_type": it.item_type.value,
+            "target_reference_id": it.target_reference_id,
+            "title_urdu": it.title_urdu,
+            "action_details": it.action_details_urdu,
+            "state": it.state.value,
+            "reviewer_note": it.reviewer_note_urdu,
+            "actioned_by": it.actioned_by,
+        }
+        for it in approval_items
+    ]
+
+    return templates.TemplateResponse(
+        request=request,
+        name="growth_portal.html",
+        context={
+            "channel_name": settings.CHANNEL_NAME,
+            "timezone": settings.TIMEZONE,
+            "analytics": overview_data.get("analytics_summary", {}),
+            "calendar_entries": calendar_entries,
+            "approvals": approvals_formatted,
+        }
+    )
+
+
 
 # ---------------------------------------------------------------------------
+
 # 2. Channel Analytics
 # ---------------------------------------------------------------------------
 

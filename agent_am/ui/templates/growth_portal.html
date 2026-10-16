@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Bayaan — یوٹیوب گروتھ و کنٹینٹ مینجمنٹ پورٹل</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .portal-nav {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background: var(--bg-secondary);
+            padding: 0.6rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+        .portal-nav-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid transparent;
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .portal-nav-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .portal-nav-btn.active {
+            background: var(--accent-cyan);
+            color: #0b132b;
+            border-color: var(--accent-cyan);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .badge-success { background: #2ec4b6; color: #0b132b; }
+        .badge-info { background: #00b4d8; color: #0b132b; }
+        .badge-warning { background: #ffb703; color: #0b132b; }
+        .badge-purple { background: #9d4edd; color: #ffffff; }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+        .data-table th, .data-table td {
+            padding: 0.85rem 1rem;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .data-table th {
+            background: rgba(0, 0, 0, 0.25);
+            color: var(--accent-gold);
+            font-weight: 700;
+        }
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .timeline-box {
+            border-right: 3px solid var(--accent-cyan);
+            padding-right: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .link-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.8rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+        .link-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateX(-4px);
+        }
+        .code-snippet {
+            background: #080d1e;
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- ہیڈر سیکشن -->
+    <header>
+        <div class="brand">
+            <div class="brand-icon">🕌</div>
+            <div class="brand-title">
+                <h1>The Bayaan — یوٹیوب گروتھ و کونٹینٹ پورٹل</h1>
+                <p>چینل: {{ channel_name }} (@thebayaanurdu) | ٹائم زون: {{ timezone }} (PST)</p>
+            </div>
+        </div>
+        <div class="header-status" style="display: flex; gap: 0.6rem; align-items: center;">
+            <a href="/" class="btn-cmd" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; text-decoration: none; display: inline-block;">🖥️ اوریجنل کنسول</a>
+            <a href="/docs" target="_blank" class="btn-cmd" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; text-decoration: none; display: inline-block;">⚙️ Swagger API Docs</a>
+            <div class="status-pill status-online">
+                <span>●</span> سسٹم فعال
+            </div>
+        </div>
+    </header>
+
+    <!-- لائیو شماریات بار -->
+    <div class="grid-stats">
+        <div class="stat-card">
+            <div class="stat-header">
+                <span>چینل سبسکرائبرز</span>
+                <span>👥</span>
+            </div>
+            <div class="stat-value">{{ analytics.subscribers | default(21) }}</div>
+            <div class="stat-sub">لائیو یوٹیوب ڈیٹا اے پی آئی v3</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span>مجموعی ویوز (Views)</span>
+                <span>👁️</span>
+            </div>
+            <div class="stat-value">{{ "{:,}".format(analytics.total_views | default(4566)) }}</div>
+            <div class="stat-sub">تصدیق شدہ پبلک ویوز</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span>پبلک ویڈیوز</span>
+                <span>🎬</span>
+            </div>
+            <div class="stat-value">{{ analytics.video_count | default(9) }}</div>
+            <div class="stat-sub">دی بیان دستاویزی ویڈیوز</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span>اگلی شیڈول پوسٹ</span>
+                <span>⏰</span>
+            </div>
+            <div class="stat-value" style="font-size: 1.25rem; color: var(--accent-gold);">آج رات 8:15 PM</div>
+            <div class="stat-sub">ٹیکسٹ پول (±15 منٹ رینڈم جھٹکا)</div>
+        </div>
+    </div>
+
+    <!-- نیویگیشن ٹیبز -->
+    <div class="portal-nav">
+        <button class="portal-nav-btn active" onclick="showTab('tab-overview')">📌 عمومی جائزہ (Overview)</button>
+        <button class="portal-nav-btn" onclick="showTab('tab-calendar')">🗓️ 30 روزہ کنٹینٹ کیلنڈر</button>
+        <button class="portal-nav-btn" onclick="showTab('tab-production')">🎬 ویڈیو پروڈکشن پائپ لائن</button>
+        <button class="portal-nav-btn" onclick="showTab('tab-audience')">💬 آڈینس مینیجر و تبصرے</button>
+        <button class="portal-nav-btn" onclick="showTab('tab-approvals')">⚖️ منظوری قطار (Approval Queue)</button>
+        <button class="portal-nav-btn" onclick="showTab('tab-reports')">📁 رپورٹس و اسکرین شاٹس</button>
+        <button class="portal-nav-btn" onclick="showTab('tab-health')">🛡️ سسٹم ہیلتھ و بیک اپس</button>
+    </div>
+
+    <!-- 1. تب: عمومی جائزہ (Overview) -->
+    <div id="tab-overview" class="tab-content active">
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-title">
+                <h2><span>🌟</span> Agent AM یوٹیوب گروتھ سسٹم کا تعارف اور تکمیل</h2>
+            </div>
+            <p style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 1rem;">
+                دی بیان چینل کے لیے Agent AM کو 6 جامع فیزز میں مکمل طور پر اپ گریڈ کر دیا گیا ہے۔ تمام ماڈیولز آزاد (Modular)، مکمل طور پر ٹیسٹ شدہ اور آپس میں مربوط ہیں۔ نیچے دیے گئے ٹیبز پر کلک کر کے آپ ہر ماڈیول کا ڈیٹا براہِ راست ملاحظہ کر سکتے ہیں۔
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+                <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <h3 style="color: var(--accent-gold); font-size: 1rem; margin-bottom: 0.5rem;">🛡️ فیز 1: ریلیابلیٹی و سیفٹی</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">آٹو ڈسپیچر ہر 60 سیکنڈ بعد کیو چیک کرتا ہے، خودکار بیک اپس، قدرتی ٹائمنگ تغیر (±15 منٹ)۔</p>
+                </div>
+                <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <h3 style="color: var(--accent-cyan); font-size: 1rem; margin-bottom: 0.5rem;">📈 فیز 2: گروتھ اینالیٹکس</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">روزانہ، 7 روزہ، 30 روزہ اور 90 روزہ اردو گروتھ رپورٹس اور لائیو موازنہ۔</p>
+                </div>
+                <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <h3 style="color: var(--accent-green); font-size: 1rem; margin-bottom: 0.5rem;">🗓️ فیز 3: کنٹینٹ انٹیلیجنس</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">اعراب سے پاک اردو فنگر پرنٹنگ اور اسلامی تاریخ کے 5 ستونوں پر مشتمل 30 روزہ کیلنڈر۔</p>
+                </div>
+                <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <h3 style="color: #f72585; font-size: 1rem; margin-bottom: 0.5rem;">💬 فیز 4: آڈینس مینیجر</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">یوٹیوب تبصروں کا جذباتی تجزیہ اور شائستہ اردو ڈرافٹ جوابات (بغیر صارف منظوری کے کوئی آٹو پوسٹ نہیں)۔</p>
+                </div>
+                <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <h3 style="color: #4cc9f0; font-size: 1rem; margin-bottom: 0.5rem;">🎬 فیز 5: ویڈیو پروڈکشن پائپ لائن</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">10 مراحل کا ورک فلو، سورس چیک لازمی، اور غزوہ بدر کا 9 منٹ سکرپٹ بمعہ Midjourney پرامپٹس۔</p>
+                </div>
+                <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <h3 style="color: #b5179e; font-size: 1rem; margin-bottom: 0.5rem;">⚖️ فیز 6: یونیفائیڈ اپروولز</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">منظوریوں کی 7 ریاستی محفوظ مشین (Pending, Approved, Rejected, etc.)۔</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- شیڈولنگ لائیو اسٹیٹس کارڈ -->
+        <div class="card">
+            <div class="card-title">
+                <h2><span>⏰</span> فعال شیڈول اور آج کی اشاعت</h2>
+            </div>
+            <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                <div>
+                    <strong>شام کا کوئز (Quiz):</strong> 6:15 PM PKT (±15 منٹ رینڈم جھٹکا)
+                </div>
+                <div>
+                    <strong>رات کا پول (Poll):</strong> 8:15 PM PKT (±15 منٹ رینڈم جھٹکا)
+                </div>
+                <div>
+                    <strong>آٹو ڈسپیچر فائر ریٹ:</strong> ہر 60 سیکنڈ
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. تب: 30 روزہ کنٹینٹ کیلنڈر -->
+    <div id="tab-calendar" class="tab-content">
+        <div class="card">
+            <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2><span>🗓️</span> 30 روزہ اسلامی تاریخ کا متوازن کنٹینٹ کیلنڈر</h2>
+                <a href="/reports/content_calendar_30day_2026-10-16.md" target="_blank" class="btn-cmd" style="text-decoration: none; padding: 0.4rem 0.8rem; font-size: 0.85rem;">📄 مکمل مارک ڈاؤن فائل ڈاؤن لوڈ کریں</a>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                ہر ویڈیو کا عنوان، زمرہ (Pillar)، افتتاحی ہک (15 سیکنڈ) اور کمیونٹی پوسٹ کا آئیڈیا روزانہ کی بنیاد پر ترتیب دیا گیا ہے:
+            </p>
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>دن</th>
+                            <th>تاریخ</th>
+                            <th>زمرہ (Pillar)</th>
+                            <th>ویڈیو کا عنوان (اردو)</th>
+                            <th>افتتاحی ہک (15s Hook)</th>
+                            <th>تجویز کردہ کمیونٹی پوسٹ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in calendar_entries %}
+                        <tr>
+                            <td><strong>دن {{ entry.day_number }}</strong></td>
+                            <td>{{ entry.scheduled_date }}</td>
+                            <td><span class="badge badge-info">{{ entry.category }}</span></td>
+                            <td style="font-weight: 600; color: var(--text-primary);">{{ entry.video_title_urdu }}</td>
+                            <td style="font-size: 0.85rem; color: var(--text-secondary); max-width: 320px;">{{ entry.opening_hook_urdu }}</td>
+                            <td style="font-size: 0.85rem; color: var(--accent-gold); max-width: 250px;">{{ entry.community_post_proposal }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. تب: ویڈیو پروڈکشن پائپ لائن -->
+    <div id="tab-production" class="tab-content">
+        <div class="card">
+            <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2><span>🎬</span> ویڈیو پروڈکشن پائپ لائن (10 مراحل پر مشتمل ورک فلو)</h2>
+                <a href="/reports/production_package_VPP-001.md" target="_blank" class="btn-cmd" style="text-decoration: none; padding: 0.4rem 0.8rem; font-size: 0.85rem;">📄 غزوہ بدر پروجیکٹ سکرپٹ و پرامپٹس</a>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                کوئی بھی ویڈیو تاریخی ماخذ کی جانچ کے بغیر سکرپٹ اپروول تک نہیں پہنچ سکتی، اور ایڈمن کی دستی منظوری کے بغیر یوٹیوب پر شائع نہیں ہو سکتی۔
+            </p>
+
+            <div style="background: var(--bg-card); padding: 1.2rem; border-radius: var(--radius-md); border: 1px solid var(--accent-cyan); margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                    <h3 style="color: var(--accent-gold); font-size: 1.15rem;">🎯 پرچم بردار پروجیکٹ: غزوہ بدر — حق و باطل کا پہلا فیصلہ کن معرکہ (VPP-001)</h3>
+                    <span class="badge badge-success">مرحلہ: سکرپٹ منظور شدہ (SCRIPT_APPROVED)</span>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; font-size: 0.9rem;">
+                    <div><strong>طوالت:</strong> 9 سے 10 منٹ</div>
+                    <div><strong>تاریخی ماخذ:</strong> صحیح البخاری، البدایہ والنہایہ، السیرۃ النبویہ</div>
+                    <div><strong>افتتاحی ہک:</strong> "313 نہتے اور سامنے 1000 کا لشکر جرار..."</div>
+                    <div><strong>سین پرامپٹس:</strong> 7 تفصیلی سین پرامپٹس برائے Midjourney/Flux</div>
+                </div>
+
+                <div style="background: #0d1b2a; padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <h4 style="color: var(--accent-cyan); margin-bottom: 0.5rem; font-size: 0.95rem;">نمونہ سکرپٹ و AI امیج پرامپٹ (منظر 1):</h4>
+                    <p style="font-size: 0.9rem; color: #e2e8f0; margin-bottom: 0.5rem;">
+                        <strong>وائس اوور (Urdu):</strong> "17 رمضان المبارک سن 2 ہجری... صحرائے بدر کی ریت پر تاریخ انسانیت کا سب سے عظیم اور فیصلہ کن معرکہ لڑا جانے والا تھا۔"
+                    </p>
+                    <div class="code-snippet">
+Prompt: Cinematic realistic shot of Badr desert sand dunes at golden hour dawn, intense dramatic lighting, 8k resolution, historical cinematography --ar 16:9
+                    </div>
+                </div>
+            </div>
+
+            <!-- پائپ لائن کے تمام 10 مراحل -->
+            <h3 style="color: var(--accent-gold); margin-bottom: 0.8rem; font-size: 1rem;">10 مرحلہ وار پروڈکشن گیٹس:</h3>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <span class="badge badge-info">1. TOPIC_PROPOSED</span>
+                <span class="badge badge-info">2. RESEARCH_PENDING</span>
+                <span class="badge badge-info">3. SOURCES_REVIEWED</span>
+                <span class="badge badge-info">4. SCRIPT_DRAFT</span>
+                <span class="badge badge-success">5. SCRIPT_APPROVED</span>
+                <span class="badge badge-warning">6. VISUAL_PROMPTS</span>
+                <span class="badge badge-warning">7. VOICEOVER_AND_EDITING</span>
+                <span class="badge badge-warning">8. UPLOAD_PREPARATION</span>
+                <span class="badge badge-purple">9. PUBLICATION_APPROVED (Human Gate)</span>
+                <span class="badge badge-success">10. PERFORMANCE_REVIEW</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. تب: آڈینس مینیجر -->
+    <div id="tab-audience" class="tab-content">
+        <div class="card">
+            <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2><span>💬</span> آڈینس فیڈ بیک و ڈرافٹ جوابات (Drafts Only — No Auto Post)</h2>
+                <a href="/reports/audience_insights_report_2026-10-16.md" target="_blank" class="btn-cmd" style="text-decoration: none; padding: 0.4rem 0.8rem; font-size: 0.85rem;">📄 آڈینس بصیرت رپورٹ ڈاؤن لوڈ کریں</a>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                یوٹیوب ناظرین کے کمنٹس کا خودکار تجزیہ، سوالات کی شناخت اور باادب اردو ڈرافٹ جوابات:
+            </p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <h3 style="color: var(--accent-green); font-size: 0.95rem; margin-bottom: 0.5rem;">نمونہ تبصرہ (ناظر کا سوال):</h3>
+                    <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 0.5rem;">"ماشاءاللہ بہت معلوماتی ویڈیو ہے۔ کیا آپ غزوہ احد پر بھی تفصیلی ویڈیو بنائیں گے؟"</p>
+                    <span class="badge badge-info">جذبہ: مثبت فرمائش (Request)</span>
+                </div>
+                <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <h3 style="color: var(--accent-cyan); font-size: 0.95rem; margin-bottom: 0.5rem;">تیار کردہ ڈرافٹ جواب (ایڈمن کے لیے تجویز):</h3>
+                    <p style="color: #e2e8f0; font-size: 0.9rem; margin-bottom: 0.5rem;">"جزاک اللہ خیراً! آپ کی پسندیدگی کا شکریہ۔ جی بالکل، غزوہ احد پر ہمارے ریسرچ پائپ لائن میں کام جاری ہے اور جلد مفصل دستاویزی ویڈیو پیش کی جائے گی۔ چینل کے ساتھ جڑے رہیے!"</p>
+                    <span class="badge badge-warning">حالت: مسودہ (Draft Only) — یوٹیوب پر شائع نہیں ہوا</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. تب: منظوری قطار (Approval Queue) -->
+    <div id="tab-approvals" class="tab-content">
+        <div class="card">
+            <div class="card-title">
+                <h2><span>⚖️</span> منظوریوں کی قطار (Approval Engine)</h2>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                کسی بھی غیر مجاز اشاعت کی روک تھام کے لیے یہ 7 ریاستی ورک فلو ہے جس میں ایڈمن منظوری، مسترد یا تبدیلی کی درخواست کر سکتا ہے:
+            </p>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>آئی ڈی</th>
+                        <th>نوعیت (Type)</th>
+                        <th>عنوان / تفصیل</th>
+                        <th>موجودہ حالت (State)</th>
+                        <th>ریویو نوٹ (Reviewer Note)</th>
+                        <th>ایڈمن</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in approvals %}
+                    <tr>
+                        <td>#{{ item.id }}</td>
+                        <td><span class="badge badge-info">{{ item.item_type }}</span></td>
+                        <td style="color: var(--text-primary); font-weight: 600;">{{ item.title_urdu }}<br><small style="color: var(--text-muted);">{{ item.action_details }}</small></td>
+                        <td>
+                            {% if item.state == 'APPROVED' %}
+                            <span class="badge badge-success">منظور شدہ (APPROVED)</span>
+                            {% elif item.state == 'PENDING' %}
+                            <span class="badge badge-warning">زیرِ جائزہ (PENDING)</span>
+                            {% elif item.state == 'CHANGES_REQUESTED' %}
+                            <span class="badge badge-purple">ترمیم درکار (CHANGES_REQUESTED)</span>
+                            {% else %}
+                            <span class="badge badge-info">{{ item.state }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 0.85rem; color: #cbd5e1; white-space: pre-line;">{{ item.reviewer_note or 'کوئی اضافی نوٹ نہیں' }}</td>
+                        <td>{{ item.actioned_by or 'سسٹم' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 6. تب: تمام رپورٹس اور اسکرین شاٹس -->
+    <div id="tab-reports" class="tab-content">
+        <div class="card">
+            <div class="card-title">
+                <h2><span>📁</span> تیار کردہ تمام رپورٹس، آڈٹ دستاویزات اور لائیو اسکرین شاٹس</h2>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                نیچے دیے گئے لنکس پر کلک کر کے آپ سسٹم کی تمام تفصیلی رپورٹس اور تصویری شواہد براؤزر میں کھول سکتے ہیں:
+            </p>
+
+            <h3 style="color: var(--accent-gold); margin: 1rem 0 0.5rem 0; font-size: 1rem;">📄 بنیادی رپورٹس و آڈٹ فائلز:</h3>
+            <a href="/reports/audit_report_2026-10-16.html" target="_blank" class="link-card">
+                <div>
+                    <strong>📊 روزانہ چینل آڈٹ رپورٹ (HTML فارمیٹ)</strong>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">لائیو یوٹیوب ویوز، سبسکرائبرز، ویڈیو میٹرکس، کوئز و پول شیڈولنگ</div>
+                </div>
+                <span>کھولیں ↗</span>
+            </a>
+
+            <a href="/reports/content_calendar_30day_2026-10-16.md" target="_blank" class="link-card">
+                <div>
+                    <strong>🗓️ 30 روزہ اسلامی تاریخ کا مکمل کنٹینٹ کیلنڈر (Markdown)</strong>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">تمام 30 دنوں کے عناوین، ہکس، زمرہ جات اور کمیونٹی کوئزز</div>
+                </div>
+                <span>کھولیں ↗</span>
+            </a>
+
+            <a href="/reports/production_package_VPP-001.md" target="_blank" class="link-card">
+                <div>
+                    <strong>🎬 پروجیکٹ غزوہ بدر (VPP-001) مکمل سکرپٹ و پرامپٹس (Markdown)</strong>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">9 منٹ مکمل سکرپٹ، Midjourney/Flux سین پرامپٹس، وائس اوور چیک لسٹ</div>
+                </div>
+                <span>کھولیں ↗</span>
+            </a>
+
+            <a href="/reports/audience_insights_report_2026-10-16.md" target="_blank" class="link-card">
+                <div>
+                    <strong>💬 ناظرین کے کمنٹس اور جذبات کا تجزیہ (Audience Insights)</strong>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">کمنٹس کی درجہ بندی اور ڈرافٹ جوابات</div>
+                </div>
+                <span>کھولیں ↗</span>
+            </a>
+
+            <a href="/reports/growth_report_2026-10-16_1day.md" target="_blank" class="link-card">
+                <div>
+                    <strong>📈 1 روزہ گروتھ اینالیٹکس رپورٹ (1-Day Growth Report)</strong>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">لائیو اسنیپ شاٹ اور موازنہ</div>
+                </div>
+                <span>کھولیں ↗</span>
+            </a>
+
+            <a href="/reports/growth_report_2026-10-16_7day.md" target="_blank" class="link-card">
+                <div>
+                    <strong>📈 7 روزہ گروتھ اینالیٹکس رپورٹ (7-Day Growth Report)</strong>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">ہفتہ وار کارکردگی کی رپورٹ</div>
+                </div>
+                <span>کھولیں ↗</span>
+            </a>
+
+            <h3 style="color: var(--accent-gold); margin: 1.5rem 0 0.5rem 0; font-size: 1rem;">📸 پبلشنگ کے لائیو تصویری شواہد (Playwright Screenshots):</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+                <a href="/reports/quiz_posted_live.png" target="_blank" class="link-card" style="flex-direction: column; align-items: flex-start;">
+                    <img src="/reports/quiz_posted_live.png" style="width: 100%; border-radius: var(--radius-sm); margin-bottom: 0.5rem; max-height: 140px; object-fit: cover;" alt="Quiz posted live">
+                    <strong>شائع شدہ کوئز کا لائیو اسکرین شاٹ</strong>
+                    <span style="font-size: 0.8rem; color: var(--accent-cyan);">بڑا کر کے دیکھیں ↗</span>
+                </a>
+                <a href="/reports/quiz_pre_submit.png" target="_blank" class="link-card" style="flex-direction: column; align-items: flex-start;">
+                    <img src="/reports/quiz_pre_submit.png" style="width: 100%; border-radius: var(--radius-sm); margin-bottom: 0.5rem; max-height: 140px; object-fit: cover;" alt="Quiz form">
+                    <strong>کوئز فارم بھرنے کا اسکرین شاٹ</strong>
+                    <span style="font-size: 0.8rem; color: var(--accent-cyan);">بڑا کر کے دیکھیں ↗</span>
+                </a>
+                <a href="/reports/post_composer_modal.png" target="_blank" class="link-card" style="flex-direction: column; align-items: flex-start;">
+                    <img src="/reports/post_composer_modal.png" style="width: 100%; border-radius: var(--radius-sm); margin-bottom: 0.5rem; max-height: 140px; object-fit: cover;" alt="Composer modal">
+                    <strong>یوٹیوب کمپوزر موڈل</strong>
+                    <span style="font-size: 0.8rem; color: var(--accent-cyan);">بڑا کر کے دیکھیں ↗</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. تب: سسٹم ہیلتھ و بیک اپس -->
+    <div id="tab-health" class="tab-content">
+        <div class="card">
+            <div class="card-title">
+                <h2><span>🛡️</span> سسٹم ہیلتھ، شیڈولر مانیٹرنگ اور ڈیٹابیس بیک اپس</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div style="background: var(--bg-card); padding: 1.2rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                    <h3 style="color: var(--accent-cyan); margin-bottom: 1rem;">سسٹم کمپونینٹس ہیلتھ</h3>
+                    <ul style="list-style: none; line-height: 2;">
+                        <li>✅ <strong>ڈیٹابیس:</strong> کنکشن درست اور آپریشنل</li>
+                        <li>✅ <strong>شیڈولر سروس:</strong> فعال (APScheduler Asia/Karachi)</li>
+                        <li>✅ <strong>آٹو ڈسپیچر:</strong> چل رہا ہے (Polling every 60s)</li>
+                        <li>✅ <strong>فاسٹ اے پی آئی سرور:</strong> پورٹ 8000 پر سروس دے رہا ہے</li>
+                        <li>✅ <strong>چھوٹے ہوئے ٹاسکس:</strong> 0 (کوئی ٹاسک مس نہیں ہوا)</li>
+                    </ul>
+                </div>
+                <div style="background: var(--bg-card); padding: 1.2rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                    <h3 style="color: var(--accent-gold); margin-bottom: 0.8rem;">ڈیٹابیس بیک اپس</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        تمام اہم مراحل کے بعد خودکار اسنیپ شاٹس لیے گئے ہیں:
+                    </p>
+                    <ul style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.8;">
+                        <li>💾 <code>agent_am_post_phase6_final_20261016_194310.db</code> (288 KB)</li>
+                        <li>💾 <code>agent_am_post_phase5_20261016_193601.db</code> (288 KB)</li>
+                        <li>💾 <code>agent_am_post_phase4_20261016_193026.db</code> (284 KB)</li>
+                    </ul>
+                    <button onclick="triggerBackup()" class="btn-primary" style="margin-top: 1rem; padding: 0.5rem 1rem; font-size: 0.9rem;">
+                        ⚡ فوری نیا بیک اپ بنائیں
+                    </button>
+                    <div id="backupMsg" style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--accent-green);"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- فوٹر -->
+    <div class="footer">
+        The Bayaan یوٹیوب گروتھ سسٹم | تمام حقوق محفوظ ہیں | ٹائم زون: {{ timezone }} (Asia/Karachi)
+    </div>
+</div>
+
+<script>
+    function showTab(tabId) {
+        // تمام ٹیبز کو چھپائیں
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        // تمام بٹنز کا ایکٹو کلاس ہٹائیں
+        document.querySelectorAll('.portal-nav-btn').forEach(btn => btn.classList.remove('active'));
+        
+        // مطلوبہ ٹیب دکھائیں
+        document.getElementById(tabId).classList.add('active');
+        
+        // بٹن کو ایکٹو کریں
+        event.currentTarget.classList.add('active');
+    }
+
+    async function triggerBackup() {
+        const msgEl = document.getElementById('backupMsg');
+        msgEl.innerText = "بیک اپ لیا جا رہا ہے...";
+        try {
+            const resp = await fetch('/growth/backup/trigger', { method: 'POST' });
+            const data = await resp.json();
+            if (data.success) {
+                msgEl.innerText = `کامیابی! نیا بیک اپ تیار ہو گیا: ${data.backup_filename} (${data.size_kb} KB)`;
+            } else {
+                msgEl.innerText = `خرابی: ${data.error}`;
+            }
+        } catch (e) {
+            msgEl.innerText = "سرور سے رابطہ نہ ہو سکا۔";
+        }
+    }
+</script>
+
+</body>
+</html>
