@@ -92,9 +92,11 @@ class CommunityPostService:
 
                 channel_url = f"https://www.youtube.com/channel/{settings.CHANNEL_ID}/posts?show_create_dialog=1"
                 logger.info(f"یوٹیوب پوسٹ ڈائیلاگ کھولا جا رہا ہے: {channel_url}")
-                await page.goto(channel_url, timeout=45000)
-                await page.wait_for_load_state("networkidle")
-                await asyncio.sleep(2)
+                try:
+                    await page.goto(channel_url, wait_until="domcontentloaded", timeout=45000)
+                except Exception as e:
+                    logger.warning(f"صفحہ لوڈ کرنے میں تنبیہ لیکن جاری رکھا جا رہا ہے: {e}")
+                await asyncio.sleep(3)
 
                 if "accounts.google.com" in page.url:
                     await browser.close()
@@ -165,18 +167,19 @@ class CommunityPostService:
                     await q_box.fill(question)
                     await asyncio.sleep(0.5)
 
-                    # مزید آپشنز کا بٹن
-                    add_btn = page.locator("button:has-text('Add option')").first
+                    # مزید آپشنز کا بٹن (اگر 2 سے زیادہ ہوں)
+                    add_btn = page.locator("button:has-text('Add another option'), button:has-text('Add option')").first
                     for _ in range(len(options) - 2):
                         if await add_btn.is_visible():
                             await add_btn.click()
                             await asyncio.sleep(0.5)
 
-                    # آپشنز پُر کریں
-                    for idx, opt_text in enumerate(options, 1):
-                        opt_locator = page.locator(f"textarea[placeholder='Option {idx}']").first
-                        if await opt_locator.is_visible():
-                            await opt_locator.fill(opt_text, force=True)
+                    # آپشنز پُر کریں (YouTube پر Text Poll کے لیے placeholder='Add option' ہوتا ہے)
+                    opt_locators = await page.locator("[placeholder='Add option']").all()
+                    for idx, opt_text in enumerate(options):
+                        if idx < len(opt_locators):
+                            await opt_locators[idx].click()
+                            await opt_locators[idx].fill(opt_text)
                             await asyncio.sleep(0.3)
 
                 # اسکرین شاٹ برائے ریکارڈ
@@ -184,29 +187,35 @@ class CommunityPostService:
                 timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
                 await page.screenshot(path=f"reports/post_presubmit_{timestamp_str}.png")
 
-                # پوسٹ بٹن دبائیں
+                # پوسٹ بٹن چیک کریں اور یقینی بنائیں کہ یہ فعال (Enabled) ہے
                 post_btn = page.locator("#post-button button, button:has-text('Post')").last
-                if await post_btn.is_visible():
-                    await post_btn.click(force=True)
-                    await asyncio.sleep(5)
-                    await page.screenshot(path=f"reports/post_submitted_{timestamp_str}.png")
+                is_vis = await post_btn.is_visible()
+                is_enabled = await post_btn.is_enabled() if is_vis else False
+
+                if not is_vis or not is_enabled:
                     await browser.close()
-                    external_id = f"yt_post_{int(datetime.now().timestamp())}"
-                    logger.info(f"پوسٹ کامیابی سے یوٹیوب پر شائع ہو گئی۔ ID: {external_id}")
-                    return {
-                        "success": True,
-                        "status": PostStatus.PUBLISHED,
-                        "external_id": external_id,
-                        "note_urdu": "کمیونٹی پوسٹ کامیابی سے یوٹیوب چینل پر براہِ راست شائع ہو چکی ہے۔"
-                    }
-                else:
-                    await browser.close()
+                    logger.error("یوٹیوب پوسٹ بٹن ڈس ایبلڈ یا غیر دستیاب تھا (شاید آپشنز یا فیلڈز مکمل نہیں ہو سکے)")
                     return {
                         "success": False,
                         "status": PostStatus.FAILED,
-                        "error": "یوٹیوب پوسٹ بٹن دستیاب نہیں تھا",
+                        "error": "یوٹیوب پوسٹ بٹن فعال (Enabled) نہیں تھا، فارم نامکمل رہ گیا",
                         "external_id": None
                     }
+
+                # فعال بٹن دبائیں
+                await post_btn.click()
+                await asyncio.sleep(5)
+                await page.screenshot(path=f"reports/post_submitted_{timestamp_str}.png")
+                await browser.close()
+                external_id = f"yt_post_{int(datetime.now().timestamp())}"
+                logger.info(f"پوسٹ کامیابی سے یوٹیوب پر شائع ہو گئی۔ ID: {external_id}")
+                return {
+                    "success": True,
+                    "status": PostStatus.PUBLISHED,
+                    "external_id": external_id,
+                    "note_urdu": "کمیونٹی پوسٹ کامیابی سے یوٹیوب چینل پر براہِ راست شائع ہو چکی ہے۔"
+                }
+
 
         except Exception as e:
             logger.error(f"Playwright پبلشنگ میں خرابی: {str(e)}")
