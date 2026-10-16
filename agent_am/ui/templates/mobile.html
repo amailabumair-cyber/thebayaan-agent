@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Agent AM — موبائل اسٹوڈیو برائے The Bayaan</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap">
+    <style>
+        :root {
+            --bg-primary: #0b132b;
+            --bg-card: #1c2541;
+            --bg-input: #0f172a;
+            --accent-cyan: #00b4d8;
+            --accent-gold: #ffb703;
+            --accent-green: #2ec4b6;
+            --accent-red: #e63946;
+            --text-primary: #f8f9fa;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --radius-md: 14px;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            direction: rtl;
+            line-height: 1.5;
+            padding: 1rem;
+            min-height: 100vh;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 1.2rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .header h1 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .header p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.2rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        .label {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 0.6rem;
+            color: var(--text-primary);
+        }
+        .input-text {
+            width: 100%;
+            background: var(--bg-input);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: #fff;
+            padding: 0.85rem 1rem;
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+            margin-bottom: 0.8rem;
+        }
+        .input-text:focus {
+            border-color: var(--accent-cyan);
+        }
+        .chips-container {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.2rem;
+        }
+        .chip {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .chip:active, .chip:hover {
+            background: var(--accent-cyan);
+            color: #0b132b;
+            border-color: var(--accent-cyan);
+            font-weight: 600;
+        }
+        .type-toggle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+            margin-bottom: 1.3rem;
+        }
+        .type-btn {
+            background: var(--bg-input);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        .type-btn.active {
+            border-color: var(--accent-gold);
+            background: rgba(255, 183, 3, 0.1);
+            color: var(--accent-gold);
+        }
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #ffb703, #fb8500);
+            color: #0b132b;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 800;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            box-shadow: 0 6px 18px rgba(251, 133, 0, 0.35);
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .progress-box {
+            display: none;
+            margin-top: 1.2rem;
+            background: var(--bg-input);
+            border-radius: 12px;
+            padding: 1.2rem;
+            border: 1px solid var(--accent-cyan);
+        }
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.7rem;
+        }
+        .progress-step.active {
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+        .progress-step.done {
+            color: var(--accent-green);
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0, 180, 216, 0.2);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .result-card {
+            display: none;
+            background: rgba(46, 196, 182, 0.08);
+            border: 2px solid var(--accent-green);
+            border-radius: var(--radius-md);
+            padding: 1.2rem;
+            margin-top: 1.2rem;
+        }
+        .result-title {
+            color: var(--accent-green);
+            font-size: 1.15rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.8rem;
+        }
+        .post-details {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        .opt-list {
+            margin-top: 0.5rem;
+            padding-right: 1.2rem;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+        }
+        .screenshot-img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin: 0.8rem 0;
+        }
+        .btn-view-yt {
+            display: block;
+            text-align: center;
+            background: #ff0000;
+            color: #fff;
+            text-decoration: none;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-top: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🕌 Agent AM — موبائل اسٹوڈیو</h1>
+    <p>The Bayaan (@thebayaanurdu) | ایک لفظ کی ڈیمانڈ پر خودکار اشاعت</p>
+</div>
+
+<div class="card">
+    <label class="label" for="topicInput">🎯 موضوع درج کریں (ایک لفظ یا جملہ):</label>
+    <input type="text" id="topicInput" class="input-text" placeholder="مثلاً: غزوہ احد، صلاح الدین، حضرت علی، یا خالی چھوڑیں..." />
+
+    <!-- فوری انتخاب کے چپس -->
+    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">💡 فوری موضوعات پر کلک کریں:</div>
+    <div class="chips-container">
+        <span class="chip" onclick="setTopic('غزوہ احد')">غزوہ احد</span>
+        <span class="chip" onclick="setTopic('حضرت عمر فاروق')">حضرت عمر فاروقؓ</span>
+        <span class="chip" onclick="setTopic('سلطان صلاح الدین ایوبی')">صلاح الدین ایوبی</span>
+        <span class="chip" onclick="setTopic('غزوہ خندق')">غزوہ خندق</span>
+        <span class="chip" onclick="setTopic('حضرت علی مرتضیٰ')">حضرت علی مرتضیٰؓ</span>
+        <span class="chip" onclick="setTopic('فتح مکہ')">فتح مکہ</span>
+        <span class="chip" onclick="setTopic('طارق بن زیاد و اندلس')">طارق بن زیاد</span>
+    </div>
+
+    <label class="label">نوعیت منتخب کریں:</label>
+    <div class="type-toggle">
+        <div class="type-btn active" id="btnTypeQuiz" onclick="selectType('QUIZ')">❓ کوئز (Quiz)</div>
+        <div class="type-btn" id="btnTypePoll" onclick="selectType('POLL')">📊 پول (Poll)</div>
+    </div>
+
+    <button id="btnPublish" class="btn-submit" onclick="startInstantPublish()">
+        <span>🚀</span> ابھی خودکار بنائیں اور اپلوڈ کریں
+    </button>
+
+    <!-- لائیو پروگریس باکس -->
+    <div id="progressBox" class="progress-box">
+        <div class="progress-step" id="step1">
+            <span class="step-icon">⏳</span> <span>مرحلہ 1: اسلامی تاریخ کے مستند ماخذ سے سوال کی تیاری...</span>
+        </div>
+        <div class="progress-step" id="step2">
+            <span class="step-icon">🔍</span> <span>مرحلہ 2: حقائق اور آپشنز کی خودکار تصدیق...</span>
+        </div>
+        <div class="progress-step" id="step3">
+            <span class="step-icon">🌐</span> <span>مرحلہ 3: براؤزر کے ذریعے یوٹیوب اسٹوڈیو لاگ ان...</span>
+        </div>
+        <div class="progress-step" id="step4">
+            <span class="step-icon">✍️</span> <span>مرحلہ 4: سوال و آپشنز پُر کر کے پوسٹ دبایا جا رہا ہے...</span>
+        </div>
+        <div class="progress-step" id="step5">
+            <span class="step-icon">✅</span> <span>مرحلہ 5: یوٹیوب پر لائیو تصدیق!</span>
+        </div>
+    </div>
+
+    <!-- کامیابی کارڈ -->
+    <div id="resultCard" class="result-card">
+        <div class="result-title">
+            <span>🎉</span> مبارک ہو! پوسٹ یوٹیوب پر لائیو ہو گئی!
+        </div>
+        <div class="post-details" id="resultDetails"></div>
+        <img id="resultImg" class="screenshot-img" src="" alt="Live screenshot" />
+        <a id="btnYtLink" href="https://www.youtube.com/channel/{{ channel_id }}/community" target="_blank" class="btn-view-yt">
+            🔴 یوٹیوب پر اپنی لائیو پوسٹ دیکھیں ↗
+        </a>
+    </div>
+</div>
+
+<script>
+    let selectedType = "QUIZ";
+
+    function setTopic(text) {
+        document.getElementById('topicInput').value = text;
+    }
+
+    function selectType(type) {
+        selectedType = type;
+        if (type === 'QUIZ') {
+            document.getElementById('btnTypeQuiz').classList.add('active');
+            document.getElementById('btnTypePoll').classList.remove('active');
+        } else {
+            document.getElementById('btnTypePoll').classList.add('active');
+            document.getElementById('btnTypeQuiz').classList.remove('active');
+        }
+    }
+
+    async function startInstantPublish() {
+        const topic = document.getElementById('topicInput').value.trim();
+        const btn = document.getElementById('btnPublish');
+        const progressBox = document.getElementById('progressBox');
+        const resultCard = document.getElementById('resultCard');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳</span> یوٹیوب پر اپلوڈ ہو رہا ہے...';
+        progressBox.style.display = 'block';
+        resultCard.style.display = 'none';
+
+        // Reset steps
+        for (let i = 1; i <= 5; i++) {
+            const el = document.getElementById('step' + i);
+            el.className = 'progress-step';
+        }
+        document.getElementById('step1').classList.add('active');
+
+        // Step simulation updates while waiting for API
+        const t1 = setTimeout(() => {
+            document.getElementById('step1').className = 'progress-step done';
+            document.getElementById('step2').className = 'progress-step active';
+        }, 2000);
+
+        const t2 = setTimeout(() => {
+            document.getElementById('step2').className = 'progress-step done';
+            document.getElementById('step3').className = 'progress-step active';
+        }, 5000);
+
+        const t3 = setTimeout(() => {
+            document.getElementById('step3').className = 'progress-step done';
+            document.getElementById('step4').className = 'progress-step active';
+        }, 12000);
+
+        try {
+            const resp = await fetch('/api/mobile/instant-publish', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    topic: topic,
+                    post_type: selectedType
+                })
+            });
+
+            clearTimeout(t1);
+            clearTimeout(t2);
+            clearTimeout(t3);
+
+            const data = await resp.json();
+
+            if (data.success) {
+                document.getElementById('step3').className = 'progress-step done';
+                document.getElementById('step4').className = 'progress-step done';
+                document.getElementById('step5').className = 'progress-step done active';
+
+                let detailsHtml = `<strong>سوال:</strong> ${data.question}<br>`;
+                detailsHtml += `<strong>آپشنز:</strong><ul class="opt-list">`;
+                data.options.forEach((opt, idx) => {
+                    const isCorrect = data.correct_answer && opt === data.correct_answer;
+                    detailsHtml += `<li>${opt} ${isCorrect ? ' <strong style="color:var(--accent-green)">(درست جواب)</strong>' : ''}</li>`;
+                });
+                detailsHtml += `</ul>`;
+                if (data.source) {
+                    detailsHtml += `<small style="color:var(--text-muted); display:block; margin-top:0.4rem;"><strong>ماخذ:</strong> ${data.source}</small>`;
+                }
+
+                document.getElementById('resultDetails').innerHTML = detailsHtml;
+                if (data.screenshot_url) {
+                    document.getElementById('resultImg').src = data.screenshot_url + '?t=' + new Date().getTime();
+                    document.getElementById('resultImg').style.display = 'block';
+                } else {
+                    document.getElementById('resultImg').style.display = 'none';
+                }
+
+                resultCard.style.display = 'block';
+            } else {
+                alert("خرابی: " + (data.error || "پوسٹ مکمل نہیں ہو سکی"));
+            }
+        } catch (e) {
+            alert("سرور سے رابطہ نہ ہو سکا۔ براۂ مہربانی دوبارہ کوشش کریں۔");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span>🚀</span> ابھی خودکار بنائیں اور اپلوڈ کریں';
+        }
+    }
+</script>
+
+</body>
+</html>

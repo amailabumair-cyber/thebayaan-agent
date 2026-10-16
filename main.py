@@ -6,12 +6,16 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
+from typing import Optional
+from datetime import datetime
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
+
+
 
 from agent_am.config.settings import settings
 from agent_am.database.connection import init_db, AsyncSessionLocal
@@ -58,7 +62,135 @@ app.include_router(growth_router)
 class CommandRequest(BaseModel):
     command: str
 
+
+class MobilePublishRequest(BaseModel):
+    topic: Optional[str] = ""
+    post_type: str = "QUIZ"  # "QUIZ" or "POLL"
+
+
+@app.get("/mobile", response_class=HTMLResponse)
+async def mobile_studio(request: Request):
+    """موبائل فون براؤزر کے لیے خصوصی خودکار کنٹرول پینل"""
+    return templates.TemplateResponse(
+        request=request,
+        name="mobile.html",
+        context={
+            "settings": settings,
+            "channel_id": settings.CHANNEL_ID,
+        }
+    )
+
+
+@app.post("/api/mobile/instant-publish")
+async def api_mobile_instant_publish(req: MobilePublishRequest):
+    """
+    موبائل سے ایک لفظ کی ڈیمانڈ پر خودکار تخلیق، توثیق اور یوٹیوب پر لائیو اشاعت
+    """
+    import json
+    import pytz
+    from agent_am.services.ai_engine import ai_engine
+    from agent_am.services.community_post_service import community_post_service
+    from agent_am.database.models import PostType, PostStatus, PostQueue
+
+    pkt = pytz.timezone(settings.TIMEZONE)
+    now_pkt = datetime.now(pkt)
+    target_date = now_pkt.strftime("%Y%m%d_%H%M%S")
+
+
+    is_quiz = req.post_type.upper() == "QUIZ"
+    p_type = PostType.QUIZ if is_quiz else PostType.POLL
+
+    # 1. AI کے ذریعے موضوع پر سوال و 4 آپشنز کی تیاری
+    if is_quiz:
+        data = await ai_engine.generate_quiz(target_topic=req.topic.strip() or None)
+    else:
+        data = await ai_engine.generate_poll(target_topic=req.topic.strip() or None)
+
+    question = data.get("question")
+    options = data.get("options", [])
+    correct_answer = data.get("correct_answer")
+    explanation = data.get("explanation")
+    source_ref = data.get("source_reference")
+
+    # 2. ڈیٹابیس میں ریکارڈ اندراج
+    async with AsyncSessionLocal() as session:
+        queue_item = PostQueue(
+            post_type=p_type,
+            target_date=target_date,
+            scheduled_time=now_pkt.replace(tzinfo=None),
+            question_text=question,
+            options_json=json.dumps(options, ensure_ascii=False),
+            correct_answer=correct_answer,
+            explanation=explanation,
+            source_reference=source_ref,
+            content_hash=data.get("content_hash", ""),
+            status=PostStatus.VALIDATED,
+        )
+        session.add(queue_item)
+        await session.commit()
+        await session.refresh(queue_item)
+        post_db_id = queue_item.id
+
+    # 3. یوٹیوب پر براہِ راست اشاعت
+    pub_res = await community_post_service.schedule_community_post(
+        post_type=p_type,
+        target_date=target_date,
+        scheduled_time=now_pkt,
+        question=question,
+        options=options,
+        correct_answer=correct_answer,
+        explanation=explanation,
+        source_reference=source_ref,
+    )
+
+    async with AsyncSessionLocal() as session:
+        from sqlalchemy import select
+
+        stmt = select(PostQueue).where(PostQueue.id == post_db_id)
+        saved = (await session.execute(stmt)).scalars().first()
+        if saved:
+            if pub_res.get("success"):
+                saved.status = PostStatus.PUBLISHED
+                saved.external_post_id = pub_res.get("external_id")
+            else:
+                saved.status = PostStatus.FAILED
+                saved.last_error = pub_res.get("error")
+            await session.commit()
+
+    if not pub_res.get("success"):
+        return JSONResponse(
+            {"success": False, "error": pub_res.get("error", "اشاعت مکمل نہیں ہو سکی")},
+            status_code=500,
+        )
+
+    # تازہ ترین اسکرین شاٹ کا پاتھ معلوم کریں
+    screenshot_url = "/reports/poll_posted_live.png" if not is_quiz else "/reports/quiz_posted_live.png"
+    reports_dir = Path(settings.REPORTS_DIR)
+    submitted_files = sorted(
+        list(reports_dir.glob("post_submitted_*.png")),
+        key=os.path.getmtime,
+        reverse=True,
+    )
+    if submitted_files:
+        screenshot_url = f"/reports/{submitted_files[0].name}"
+
+    return JSONResponse(
+        {
+            "success": True,
+            "post_type": req.post_type,
+            "question": question,
+            "options": options,
+            "correct_answer": correct_answer,
+            "explanation": explanation,
+            "source": source_ref,
+            "external_id": pub_res.get("external_id"),
+            "screenshot_url": screenshot_url,
+        }
+    )
+
+
 @app.get("/", response_class=HTMLResponse)
+
 async def dashboard(request: Request):
     """مرکزی اردو ڈیش بورڈ"""
     channel_info = {}
