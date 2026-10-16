@@ -59,6 +59,20 @@ class SchedulerService:
         )
         logger.info("خودکار پوسٹنگ ڈسپیچر رجسٹرڈ (ہر 60 سیکنڈ بعد لائیو وقت کی جانچ)")
 
+        # 4. Phase 2 — روزانہ صبح 9:30 بجے Growth Analytics ڈیٹا اکٹھا کرنا
+        from agent_am_growth.analytics.metrics_collector import metrics_collector
+        self.scheduler.add_job(
+            metrics_collector.collect_all,
+            trigger=CronTrigger(hour=9, minute=30, timezone=settings.tz),
+            id="daily_growth_analytics",
+            name="روزانہ Growth Analytics ڈیٹا کلیکشن",
+            replace_existing=True,
+            misfire_grace_time=3600,
+            coalesce=True,
+        )
+        logger.info("Growth Analytics جاب رجسٹرڈ: ہر روز صبح 9:30 بجے (Asia/Karachi)")
+
+
     async def _heartbeat_and_queue_check(self):
         """چیک کرتا ہے کہ اگلے 48 گھنٹوں کی قطار مکمل ہے یا نہیں"""
         try:

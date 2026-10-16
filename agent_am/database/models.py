@@ -134,3 +134,43 @@ class SystemHealth(Base):
     status = Column(String(50), nullable=False) # HEALTHY, DEGRADED, DOWN
     message_urdu = Column(Text, nullable=False)
     last_checked_at = Column(DateTime, default=datetime.utcnow)
+
+
+# ---------------------------------------------------------------------------
+# Phase 2 — Growth Analytics Tables (additive only — existing tables unchanged)
+# ---------------------------------------------------------------------------
+
+class GrowthChannelSnapshot(Base):
+    """چینل کی روزانہ کارکردگی کا تاریخی ریکارڈ (Phase 2 - Growth Analytics)"""
+    __tablename__ = "growth_channel_snapshots"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    snapshot_date = Column(String(20), nullable=False, unique=True, index=True)  # YYYY-MM-DD
+    subscribers = Column(Integer, default=0)
+    total_views = Column(Integer, default=0)
+    video_count = Column(Integer, default=0)
+    # ڈیٹا کا ماخذ: live_api = براہ راست YouTube API | snapshot_db = پرانے DB سے لیا گیا
+    data_source = Column(String(50), nullable=False, default="live_api")
+    timestamp_pkt = Column(String(50), nullable=True)  # Asia/Karachi ISO timestamp
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class GrowthVideoSnapshot(Base):
+    """ہر ویڈیو کی روزانہ کارکردگی کا تاریخی ریکارڈ (Phase 2 - Growth Analytics)"""
+    __tablename__ = "growth_video_snapshots"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    video_id = Column(String(50), nullable=False, index=True)
+    title = Column(String(500), nullable=False)
+    views = Column(Integer, default=0)
+    likes = Column(Integer, default=0)
+    comments = Column(Integer, default=0)
+    snapshot_date = Column(String(20), nullable=False, index=True)  # YYYY-MM-DD
+    duration_seconds = Column(Integer, default=0)
+    published_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("video_id", "snapshot_date", name="uq_video_date_snapshot"),
+        Index("ix_growth_video_date", "snapshot_date"),
+    )
