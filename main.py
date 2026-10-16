@@ -20,9 +20,11 @@ from agent_am.services.scheduler_service import scheduler_service
 from agent_am.core.commands import urdu_commands
 from agent_am.core.queue_manager import queue_manager
 from agent_am.core.workflow import workflow
+from agent_am_growth.dashboard import growth_router
 from sqlalchemy import select
 
 BASE_DIR = Path(__file__).resolve().parent
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -48,6 +50,10 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "agent_am" / "ui" / "static")), name="static")
 app.mount("/reports", StaticFiles(directory=str(BASE_DIR / settings.REPORTS_DIR)), name="reports")
 templates = Jinja2Templates(directory=str(BASE_DIR / "agent_am" / "ui" / "templates"))
+
+# Phase 6 — یوٹیوب گروتھ سسٹم کے توسیعی روٹس
+app.include_router(growth_router)
+
 
 class CommandRequest(BaseModel):
     command: str

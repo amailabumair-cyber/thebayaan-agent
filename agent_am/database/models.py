@@ -325,4 +325,43 @@ class VideoProductionProject(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+# ---------------------------------------------------------------------------
+# Phase 6 — Unified Dashboard & Approval Queue Tables (additive only)
+# ---------------------------------------------------------------------------
+
+class ApprovalState(str, enum.Enum):
+    PENDING = "PENDING"                        # 1. زیر التواء (Pending Approval)
+    APPROVED = "APPROVED"                      # 2. منظور شدہ (Approved)
+    REJECTED = "REJECTED"                      # 3. مسترد (Rejected)
+    CHANGES_REQUESTED = "CHANGES_REQUESTED"    # 4. ترمیم درکار (Changes Requested)
+    EXECUTING = "EXECUTING"                    # 5. عمل جاری (Executing)
+    COMPLETED = "COMPLETED"                    # 6. مکمل شدہ (Completed)
+    FAILED = "FAILED"                          # 7. ناکام رہا (Failed)
+
+
+class ApprovalActionType(str, enum.Enum):
+    VIDEO_PUBLICATION = "VIDEO_PUBLICATION"    # ویڈیو کی اشاعت
+    COMMUNITY_POST = "COMMUNITY_POST"          # کمیونٹی کوئز یا پول
+    TOPIC_PROPOSAL = "TOPIC_PROPOSAL"          # نیا تاریخی موضوع
+    DRAFT_REPLY = "DRAFT_REPLY"                # کمنٹ کا جواب
+
+
+class ApprovalItem(Base):
+    """منظوری قطار کے اندراجات (Phase 6 - Approval Queue)"""
+    __tablename__ = "approval_items"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    item_type = Column(Enum(ApprovalActionType), nullable=False, index=True)
+    target_reference_id = Column(String(100), nullable=False)   # پروجیکٹ کوڈ یا پوسٹ آئی ڈی
+    title_urdu = Column(String(500), nullable=False)
+    action_details_urdu = Column(Text, nullable=False)          # صریح کارروائی کی تفصیل
+    state = Column(Enum(ApprovalState), default=ApprovalState.PENDING, nullable=False, index=True)
+    reviewer_note_urdu = Column(Text, nullable=True)
+    actioned_by = Column(String(100), nullable=True)            # ایڈمن کا نام
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    actioned_at = Column(DateTime, nullable=True)
+
+
+
 
