@@ -174,3 +174,58 @@ class GrowthVideoSnapshot(Base):
         UniqueConstraint("video_id", "snapshot_date", name="uq_video_date_snapshot"),
         Index("ix_growth_video_date", "snapshot_date"),
     )
+
+
+# ---------------------------------------------------------------------------
+# Phase 3 — Content Intelligence Tables (additive only — existing tables unchanged)
+# ---------------------------------------------------------------------------
+
+class ContentCategory(str, enum.Enum):
+    PROPHETS = "PROPHETS"              # قصص الانبیاء
+    SEERAH = "SEERAH"                  # سیرت النبی ﷺ اور ابتدائی اسلامی تاریخ
+    COMPANIONS = "COMPANIONS"          # خلفائے راشدین اور صحابہ کرام
+    BATTLES_EVENTS = "BATTLES_EVENTS"  # تاریخی معرکے اور اہم واقعات
+    AUDIENCE_QA = "AUDIENCE_QA"        # سامعین کے تعلیمی سوالات و جوابات
+
+
+class ProposalStatus(str, enum.Enum):
+    PROPOSED = "PROPOSED"              # تجویز شدہ
+    APPROVED = "APPROVED"              # منظور شدہ
+    REJECTED = "REJECTED"              # مسترد
+    PRODUCED = "PRODUCED"              # پروڈکشن میں شامل
+
+
+class ContentTopicProposal(Base):
+    """ویڈیو اور کمیونٹی موضوعات کی تجاویز (Phase 3 - Content Intelligence)"""
+    __tablename__ = "content_topic_proposals"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    category = Column(Enum(ContentCategory), nullable=False, index=True)
+    topic_title_urdu = Column(String(500), nullable=False)
+    suggested_titles_json = Column(Text, nullable=False, default="[]")  # 3 titles
+    opening_hook_urdu = Column(Text, nullable=False)                    # 15s hook
+    thumbnail_concept_urdu = Column(Text, nullable=False)               # Visual thumbnail concept
+    priority_score = Column(Integer, default=50)                        # 1-100 score
+    rationale_urdu = Column(Text, nullable=False)                       # کیوں ضروری ہے
+    uncertainty_notes_urdu = Column(Text, nullable=False)               # حدود اور غیر یقینی
+    content_fingerprint = Column(String(64), nullable=False, unique=True, index=True)  # SHA-256
+    status = Column(Enum(ProposalStatus), default=ProposalStatus.PROPOSED, nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ContentCalendarEntry(Base):
+    """30 روزہ جامع کونٹینٹ کیلنڈر (Phase 3 - Content Intelligence)"""
+    __tablename__ = "content_calendar_entries"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    day_number = Column(Integer, nullable=False, unique=True, index=True)  # 1 to 30
+    target_date = Column(String(20), nullable=False, unique=True, index=True)  # YYYY-MM-DD (PKT)
+    category = Column(Enum(ContentCategory), nullable=False)
+    video_topic_id = Column(Integer, nullable=True)                     # ContentTopicProposal ID
+    video_title_urdu = Column(String(500), nullable=False)
+    quiz_proposal_urdu = Column(Text, nullable=False)                   # شام 6:15 کا کوئز
+    poll_proposal_urdu = Column(Text, nullable=False)                   # رات 8:15 کا پول
+    production_priority = Column(String(20), default="MEDIUM")          # HIGH, MEDIUM, LOW
+    notes_urdu = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
