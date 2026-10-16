@@ -24,7 +24,6 @@ from agent_am.services.scheduler_service import scheduler_service
 from agent_am.core.commands import urdu_commands
 from agent_am.core.queue_manager import queue_manager
 from agent_am.core.workflow import workflow
-from agent_am_growth.dashboard import growth_router
 from sqlalchemy import select
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -44,8 +43,8 @@ async def lifespan(app: FastAPI):
     print("Agent AM بحفاظت بند ہو گیا۔")
 
 app = FastAPI(
-    title="Agent AM - Autonomous YouTube Channel Manager",
-    description="The Bayan چینل کا خودکار اے آئی مینیجر",
+    title="Agent AM - Community Quiz & Poll Publisher",
+    description="The Bayaan چینل کا خودکار کوئز اور پول مینیجر",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -54,9 +53,6 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "agent_am" / "ui" / "static")), name="static")
 app.mount("/reports", StaticFiles(directory=str(BASE_DIR / settings.REPORTS_DIR)), name="reports")
 templates = Jinja2Templates(directory=str(BASE_DIR / "agent_am" / "ui" / "templates"))
-
-# Phase 6 — یوٹیوب گروتھ سسٹم کے توسیعی روٹس
-app.include_router(growth_router)
 
 
 class CommandRequest(BaseModel):
@@ -190,9 +186,20 @@ async def api_mobile_instant_publish(req: MobilePublishRequest):
 
 
 @app.get("/", response_class=HTMLResponse)
+async def home_studio(request: Request):
+    """مرکزی اسٹوڈیو برائے کوئز اور پول خودکار اشاعت"""
+    return templates.TemplateResponse(
+        request=request,
+        name="mobile.html",
+        context={
+            "settings": settings,
+            "channel_id": settings.CHANNEL_ID,
+        }
+    )
 
-async def dashboard(request: Request):
-    """مرکزی اردو ڈیش بورڈ"""
+@app.get("/console", response_class=HTMLResponse)
+async def dashboard_console(request: Request):
+    """ڈیسک ٹاپ مانیٹرنگ کنسول"""
     channel_info = {}
     async with AsyncSessionLocal() as session:
         stmt = select(ChannelConfig).where(ChannelConfig.channel_name == settings.CHANNEL_NAME)
