@@ -16,8 +16,11 @@ from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
 class PostType(str, enum.Enum):
-    QUIZ = "QUIZ"      # اسلامی تاریخ کوئز
-    POLL = "POLL"      # معلوماتی ٹیکسٹ پول
+    QUIZ = "QUIZ"              # اسلامی تاریخ کوئز (4 آپشنز مع صحیح جواب)
+    POLL = "POLL"              # ٹیکسٹ پول
+    TEXT_POLL = "TEXT_POLL"    # ٹیکسٹ پول (4 آپشنز)
+    IMAGE = "IMAGE"            # تصویر پوسٹ (معلوماتی تصویر مع کیپشن)
+    IMAGE_POLL = "IMAGE_POLL"  # تصویر پول (2 تا 4 آپشنز مع تصاویر)
 
 class PostStatus(str, enum.Enum):
     DRAFT = "DRAFT"              # ابتدائی مسودہ تیار
@@ -96,6 +99,8 @@ class PostQueue(Base):
     correct_answer = Column(String(255), nullable=True) # کوئز کا درست جواب
     explanation = Column(Text, nullable=True) # تفصیلی وضاحت
     source_reference = Column(Text, nullable=True) # تاریخی / معتبر حوالہ
+    image_path = Column(String(500), nullable=True) # تصویری پوسٹ کی فائل کا پاتھ
+    images_json = Column(Text, nullable=True) # تصویر پول کے آپشنز کی تصاویر کا JSON ["path1", "path2", ...]
     
     content_hash = Column(String(64), nullable=False, index=True) # تکرار روکنے کے لیے SHA256 ہیش
     status = Column(Enum(PostStatus), default=PostStatus.DRAFT, nullable=False, index=True)

@@ -28,6 +28,17 @@ async def init_db() -> None:
     """ڈیٹا بیس کی تمام ٹیبلز کو چیک اور کریٹ کرتا ہے"""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Safe column addition for existing sqlite tables
+        try:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE post_queue ADD COLUMN image_path VARCHAR(500)"))
+        except Exception:
+            pass
+        try:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE post_queue ADD COLUMN images_json TEXT"))
+        except Exception:
+            pass
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """فاسٹ اے پی آئی (FastAPI) یا سروسز کے لیے ڈیٹا بیس سیشن حاصل کرنے کا فنکشن"""

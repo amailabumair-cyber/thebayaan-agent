@@ -48,7 +48,7 @@ class SchedulerService:
         logger.info("مسڈ رن ریکوری اور قطار کی توثیقی جاب ہر 2 گھنٹے بعد رجسٹرڈ")
 
         # 3. خودکار پوسٹ ڈسپیچر (ہر 60 سیکنڈ بعد شیڈول وقت کی جانچ اور اشاعت)
-        from agent_am_growth.reliability.dispatcher import queue_dispatcher
+        from agent_am.services.dispatcher_service import queue_dispatcher
         self.scheduler.add_job(
             queue_dispatcher.dispatch_due_posts,
             trigger=IntervalTrigger(seconds=60, timezone=settings.tz),

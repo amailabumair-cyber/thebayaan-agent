@@ -1,27 +1,24 @@
-FROM python:3.11-slim
-
-# ٹائم زون سیٹ کریں (Asia/Karachi)
-ENV TZ=Asia/Karachi
-ENV PYTHONUNBUFFERED=1
+# Official Microsoft Playwright image with Python 3.11 and pre-installed browser binaries
+FROM mcr.microsoft.com/playwright/python:v1.46.0-jammy
 
 WORKDIR /app
 
-# ضروری سسٹم لائبریریز انسٹال کریں
+ENV PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    TZ=Asia/Karachi
+
+# Install Urdu and Arabic fonts for proper rendering
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    fonts-noto-core \
+    fonts-noto-extra \
     tzdata \
-    gcc \
-    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# پیکجز کی تنصیب
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# سورس کوڈ کاپی کریں
 COPY . .
-
-# رپورٹس ڈائرکٹری بنائیں
-RUN mkdir -p reports
 
 EXPOSE 8000
 

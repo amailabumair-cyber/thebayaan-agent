@@ -41,10 +41,12 @@ class QueueManager:
                     "target_date": r.target_date,
                     "scheduled_time": r.scheduled_time.strftime("%Y-%m-%d %I:%M %p"),
                     "question_text": r.question_text,
-                    "options": json.loads(r.options_json),
+                    "options": json.loads(r.options_json) if r.options_json else [],
                     "correct_answer": r.correct_answer,
                     "explanation": r.explanation,
                     "source_reference": r.source_reference,
+                    "image_path": r.image_path,
+                    "images": json.loads(r.images_json) if r.images_json else [],
                     "status": r.status.value,
                     "external_post_id": r.external_post_id,
                     "retry_count": r.retry_count,
@@ -130,16 +132,22 @@ class QueueManager:
         """نئی پوسٹ کو محفوظ کر کے شیڈول کرتا ہے"""
         content_hash = data.get("content_hash") or ai_engine.compute_content_hash(data["question"], data["options"])
 
+        options = data.get("options", [])
+        image_path = data.get("image_path")
+        option_images = data.get("option_images", [])
+
         # شیڈولنگ سروس کو کال کریں
         sched_res = await community_post_service.schedule_community_post(
             post_type=post_type,
             target_date=target_date,
             scheduled_time=scheduled_time,
             question=data["question"],
-            options=data["options"],
+            options=options,
             correct_answer=data.get("correct_answer"),
             explanation=data.get("explanation"),
-            source_reference=data.get("source_reference")
+            source_reference=data.get("source_reference"),
+            image_path=image_path,
+            option_images=option_images,
         )
 
         async with AsyncSessionLocal() as session:
@@ -148,10 +156,12 @@ class QueueManager:
                 target_date=target_date,
                 scheduled_time=scheduled_time,
                 question_text=data["question"],
-                options_json=json.dumps(data["options"], ensure_ascii=False),
+                options_json=json.dumps(options, ensure_ascii=False),
                 correct_answer=data.get("correct_answer"),
                 explanation=data.get("explanation"),
                 source_reference=data.get("source_reference"),
+                image_path=image_path,
+                images_json=json.dumps(option_images, ensure_ascii=False) if option_images else None,
                 content_hash=content_hash,
                 status=sched_res.get("status", PostStatus.DRAFT),
                 external_post_id=sched_res.get("external_id"),

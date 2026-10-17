@@ -154,6 +154,89 @@ class AIEngine:
             logger.warning(f"AI API دستیاب نہیں یا ایرر آیا: {str(e)}۔ فال بیک پول استعمال کیا جا رہا ہے۔")
             return self._get_verified_fallback_poll(recent_topics, target_topic)
 
+    async def generate_image_post(self, recent_topics: List[str] = None, target_topic: Optional[str] = None) -> Dict[str, Any]:
+        """
+        تصویر پوسٹ کے لیے مستند تاریخی یا قرآنی اقتباس مع 1080x1080 نفیس کارڈ تیار کرتا ہے
+        جیمنائی اے آئی کے ذریعے تاریخی اور اسلامی صحت کی مکمل توثیق کے ساتھ
+        """
+        from agent_am.services.islamic_catalog import find_image_post_by_topic
+        from agent_am.services.image_card_service import image_card_service
+
+        system_instruction = (
+            "آپ یوٹیوب چینل 'The Bayaan' (دی بیان) کے لیے مستند اسلامی تاریخ، سیرت اور قرآنی علوم کے ماہر محقق ہیں۔ "
+            "آپ کو دیے گئے موضوع پر انتہائی پر اثر، دلنشین، اور 100% تاریخی و دینی لحاظ سے درست پیغام یا عبرت کا درس تیار کرنا ہے۔\n\n"
+            "سخت تاریخی و شرعی ضوابط:\n"
+            "1. اگر موضوع فرعون، نمرود، قارون، ابو جہل یا کوئی ظالم/سرکش کردار ہو: تو ہرگز ہرگز ان کی طرف 'اخلاص'، 'ثابت قدمی' یا کوئی فضیلت منسوب نہ کی جائے! "
+            "بلکہ ان کا تذکرہ تکبر کے عبرتناک انجام، غرور کی شکست، اور اللہ کے عذاب و غرقابی کے درس کے طور پر ہو۔ حوالہ قرآن کی متعلقہ آیت کا ہو۔\n"
+            "2. اگر موضوع کوئی نبی، صحابی یا نیک ہستی ہو (جیسے موسیٰؑ، ابراہیمؑ، عمر فاروقؓ): تو ان کے توکل، صبر، عدل، استقامت اور سیرت کا نورانی پہلو بیان کیا جائے۔\n"
+            "3. عنوان پر وقار ہو (1 لائن)۔ کارڈ کا متن فصیح اور بامحاورہ اردو ہو (2 سے 3 جملے)۔\n"
+            "4. حوالہ لازمی اور قطعی مستند ہو (سورہ و آیت نمبر، یا صحیح حدیث، یا البدایہ والنہایہ)۔"
+        )
+        prompt = f"""
+مطلوبہ موضوع: {target_topic or 'اسلامی تاریخ و عبرت'}
+
+براہِ کرم درج ذیل JSON فارمیٹ میں جواب فراہم کریں:
+{{
+    "title": "عنوان (مثلاً: عبرت کا درس: فرعون کا انجام یا حضرت موسیٰؑ کا توکل)",
+    "card_text": "کارڈ پر لکھا جانے والا پر اثر اردو متن",
+    "source_reference": "مستند ماخذ و حوالہ (مثلاً: قرآن مجید، سورہ یونس: 92)",
+    "caption": "یوٹیوب کمیونٹی پوسٹ کا تفصیلی کیپشن مع ہیش ٹیگز"
+}}
+"""
+        base_data = None
+        try:
+            raw_json = await self._query_llm(system_instruction, prompt)
+            ai_data = json.loads(raw_json)
+            if ai_data.get("card_text") and ai_data.get("title"):
+                base_data = {
+                    "topic": target_topic or "اسلامی تاریخ",
+                    "title": ai_data.get("title"),
+                    "card_text": ai_data.get("card_text"),
+                    "source_reference": ai_data.get("source_reference", "دی بیان (The Bayaan)"),
+                    "question": ai_data.get("caption") or (
+                        f"🕌 {ai_data.get('title')}\n\n"
+                        f"\"{ai_data.get('card_text')}\"\n\n"
+                        f"📖 ماخذ و حوالہ: {ai_data.get('source_reference')}\n\n"
+                        f"— پیشکش: دی بیان (The Bayaan)\n#TheBayaan #IslamicHistory"
+                    ),
+                    "content_hash": hashlib.sha256(f"{ai_data.get('title')}_{ai_data.get('card_text')}".encode("utf-8")).hexdigest()
+                }
+        except Exception as e:
+            logger.warning(f"AI اقتباس جنریشن میں تنبیہ: {e}، کیٹلاگ فال بیک استعمال ہو رہا ہے")
+
+        if not base_data:
+            base_data = find_image_post_by_topic(target_topic)
+
+        card_path = await image_card_service.generate_image_post_card_async(
+            title=base_data.get("title", ""),
+            content_text=base_data.get("card_text", ""),
+            source=base_data.get("source_reference", "دی بیان (The Bayaan)")
+        )
+        base_data["image_path"] = str(card_path)
+        base_data["post_type"] = "IMAGE"
+        return base_data
+
+    async def generate_image_poll(self, recent_topics: List[str] = None, target_topic: Optional[str] = None) -> Dict[str, Any]:
+        """
+        تصویر پول (Image Poll) کے لیے سوال مع 2 تا 4 آپشنز اور ان کے انفرادی اسکوائر کارڈز تیار کرتا ہے
+        """
+        from agent_am.services.islamic_catalog import find_image_poll_by_topic
+        from agent_am.services.image_card_service import image_card_service
+
+        base_data = find_image_poll_by_topic(target_topic)
+        options = base_data.get("options", [])
+        option_images = []
+        for idx, opt_text in enumerate(options, 1):
+            opt_card = image_card_service.generate_poll_option_card(
+                option_index=idx,
+                option_text=opt_text
+            )
+            option_images.append(str(opt_card))
+
+        base_data["option_images"] = option_images
+        base_data["post_type"] = "IMAGE_POLL"
+        return base_data
+
 
     def verify_quiz_structure(self, data: Dict[str, Any]) -> None:
         """کوئز کے بنیادی اسٹرکچر اور درست جواب کی جانچ"""

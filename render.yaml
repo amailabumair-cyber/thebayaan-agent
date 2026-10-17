@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: thebayaan-agent
+    env: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: TIMEZONE
+        value: Asia/Karachi
+      - key: AGENT_NAME
+        value: Agent AM
+      - key: CHANNEL_NAME
+        value: The Bayan
+      - key: CHANNEL_ID
+        value: UCcf-vu1rx2g9gPHdPwrPvYQ
